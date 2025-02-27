@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker</title>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .workout-form {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .exercise-history {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input, select {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .set-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+      background: #fff;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .remove-set {
+      background: #dc3545;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .workout-card {
+      border: 1px solid #eee;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+    .sets-grid {
+      display: grid;
+      grid-template-columns: 70px 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .sets-header {
+      font-weight: bold;
+      padding: 5px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .sets-data {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .exercise-date {
+      color: #666;
+      font-size: 14px;
+    }
+    .error-message {
+      padding: 10px;
+      background-color: #f8d7da;
+      color: #721c24;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    .reset-storage {
+      background: #dc3545;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <p>Loading workout tracker...</p>
+  </div>
+
+  <!-- Load React from CDN with correct URLs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    // Error Boundary Component
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      
+      componentDidCatch(error, errorInfo) {
+        console.error("Error caught by boundary:", error, errorInfo);
+      }
+      
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="error-message">
+              <h2>Something went wrong</h2>
+              <p>{this.state.error && this.state.error.toString()}</p>
+              <button onClick={() => this.setState({ hasError: false })}>Try Again</button>
+              <button 
+                className="reset-storage" 
+                onClick={() => {
+                  localStorage.removeItem('workouts');
+                  window.location.reload();
+                }}
+              >
+                Reset App Data
+              </button>
+            </div>
+          );
+        }
+        
+        return this.props.children;
+      }
+    }
+
+    function WorkoutTracker() {
+      // Load and sanitize data from localStorage
+      const loadSanitizedWorkouts = () => {
+        try {
+          const saved = localStorage.getItem('workouts');
+          if (!saved) return [];
+          
+          const parsedData = JSON.parse(saved);
+          if (!Array.isArray(parsedData)) return [];
+          
+          // Sanitize the workout data to ensure proper structure
+          return parsedData.filter(workout => {
+            // Ensure the workout has the expected properties
+            if (!workout || typeof workout !== 'object') return false;
+            if (!workout.name || !workout.date) return false;
+            
+            // Ensure sets is an array
+            if (!Array.isArray(workout.sets)) {
+              console.warn('Found workout with invalid sets, fixing:', workout);
+              // Try to fix it by providing a default set
+              workout.sets = [{weight: 0, reps: 0}];
+            }
+            
+            // Validate each set
+            workout.sets = workout.sets.filter(set => 
+              set && typeof set === 'object' && 
+              'weight' in set && 'reps' in set
+            );
+            
+            // Only keep workouts that have at least one valid set
+            return workout.sets.length > 0;
+          });
+        } catch (error) {
+          console.error('Error loading workouts from localStorage:', error);
+          return [];
+        }
+      };
+
+      const [workouts, setWorkouts] = React.useState(loadSanitizedWorkouts);
+      
+      const [currentExercise, setCurrentExercise] = React.useState({
+        name: '',
+        date: new Date().toISOString().split('T')[0],
+        sets: [{
+          weight: '',
+          reps: ''
+        }]
+      });
+
+      // Save workouts to localStorage whenever it changes
+      React.useEffect(() => {
+        try {
+          localStorage.setItem('workouts', JSON.stringify(workouts));
+        } catch (error) {
+          console.error('Error saving to localStorage:', error);
+        }
+      }, [workouts]);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        // Validation
+        if (!currentExercise.name.trim()) {
+          alert("Please enter an exercise name");
+          return;
+        }
+        
+        // Check if all sets have values
+        const invalidSets = currentExercise.sets.some(
+          set => !set.weight || !set.reps
+        );
+        
+        if (invalidSets) {
+          alert("Please complete all set information");
+          return;
+        }
+        
+        setWorkouts([...workouts, {...currentExercise}]);
+        
+        // Reset form
+        setCurrentExercise({
+          name: '',
+          date: new Date().toISOString().split('T')[0],
+          sets: [{
+            weight: '',
+            reps: ''
+          }]
+        });
+      };
+
+      const addSet = () => {
+        setCurrentExercise({
+          ...currentExercise,
+          sets: [...currentExercise.sets, { weight: '', reps: '' }]
+        });
+      };
+
+      const removeSet = (index) => {
+        if (currentExercise.sets.length > 1) {
+          const newSets = [...currentExercise.sets];
+          newSets.splice(index, 1);
+          setCurrentExercise({
+            ...currentExercise,
+            sets: newSets
+          });
+        }
+      };
+
+      const updateSet = (index, field, value) => {
+        const newSets = [...currentExercise.sets];
+        newSets[index] = { ...newSets[index], [field]: value };
+        setCurrentExercise({
+          ...currentExercise,
+          sets: newSets
+        });
+      };
+
+      const deleteWorkout = (index) => {
+        const newWorkouts = [...workouts];
+        newWorkouts.splice(index, 1);
+        setWorkouts(newWorkouts);
+      };
+
+      // Add a function to clear all data
+      const clearAllData = () => {
+        if (window.confirm('Are you sure you want to delete all workout data?')) {
+          localStorage.removeItem('workouts');
+          setWorkouts([]);
+        }
+      };
+
+      // Group workouts by date (most recent first)
+      const workoutsByDate = {};
+      workouts.forEach(workout => {
+        if (!workoutsByDate[workout.date]) {
+          workoutsByDate[workout.date] = [];
+        }
+        workoutsByDate[workout.date].push(workout);
+      });
+
+      // Sort dates in descending order
+      const sortedDates = Object.keys(workoutsByDate).sort((a, b) => 
+        new Date(b) - new Date(a)
+      );
+
+      return (
+        <div>
+          <h1>Workout Tracker</h1>
+          
+          <div className="workout-form">
+            <h2>Add New Exercise</h2>
+            <form onSubmit={handleSubmit}>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Exercise Name"
+                  value={currentExercise.name}
+                  onChange={(e) => setCurrentExercise({...currentExercise, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <input
+                  type="date"
+                  value={currentExercise.date}
+                  onChange={(e) => setCurrentExercise({...currentExercise, date: e.target.value})}
+                />
+              </div>
+              
+              <h3>Sets</h3>
+              {currentExercise.sets.map((set, index) => (
+                <div key={index} className="set-container">
+                  <span style={{minWidth: '60px'}}>Set {index + 1}:</span>
+                  <input
+                    type="number"
+                    placeholder="Weight (lbs)"
+                    value={set.weight}
+                    style={{flex: 1}}
+                    onChange={(e) => updateSet(index, 'weight', e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Reps"
+                    value={set.reps}
+                    style={{flex: 1}}
+                    onChange={(e) => updateSet(index, 'reps', e.target.value)}
+                  />
+                  {currentExercise.sets.length > 1 && (
+                    <button 
+                      type="button" 
+                      className="remove-set"
+                      onClick={() => removeSet(index)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              <button type="button" onClick={addSet} style={{marginRight: '10px'}}>
+                Add Set
+              </button>
+              <button type="submit">Save Exercise</button>
+            </form>
+          </div>
+
+          <div className="exercise-history">
+            <h2>Workout History</h2>
+            {workouts.length === 0 ? (
+              <p>No workouts recorded yet.</p>
+            ) : (
+              <div>
+                <button 
+                  onClick={clearAllData} 
+                  className="reset-storage" 
+                  style={{marginBottom: '20px'}}
+                >
+                  Clear All Data
+                </button>
+                
+                {sortedDates.map(date => (
+                  <div key={date}>
+                    <h3 className="exercise-date">
+                      {new Date(date).toLocaleDateString(undefined, { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </h3>
+                    {workoutsByDate[date].map((workout, index) => (
+                      <div key={`${date}-${index}`} className="workout-card">
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                          <h3 style={{margin: '0 0 10px 0'}}>{workout.name}</h3>
+                          <button 
+                            onClick={() => deleteWorkout(workouts.indexOf(workout))}
+                            style={{background: 'transparent', color: '#dc3545', padding: '2px 6px'}}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        
+                        <div className="sets-grid">
+                          <div className="sets-header">Set</div>
+                          <div className="sets-header">Weight</div>
+                          <div className="sets-header">Reps</div>
+                          
+                          {Array.isArray(workout.sets) ? (
+                            workout.sets.map((set, setIndex) => (
+                              <React.Fragment key={setIndex}>
+                                <div className="sets-data">Set {setIndex + 1}</div>
+                                <div className="sets-data">{set.weight} lbs</div>
+                                <div className="sets-data">{set.reps}</div>
+                              </React.Fragment>
+                            ))
+                          ) : (
+                            <React.Fragment>
+                              <div className="sets-data" colSpan="3">No valid sets data</div>
+                            </React.Fragment>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Improved initialization code with error handling
+    window.onload = function() {
+      try {
+        const domContainer = document.getElementById('root');
+        if (!domContainer) {
+          console.error('Root element not found');
+          return;
+        }
+        const root = ReactDOM.createRoot(domContainer);
+        root.render(
+          <ErrorBoundary>
+            <WorkoutTracker />
+          </ErrorBoundary>
+        );
+      } catch (error) {
+        console.error('Error rendering React component:', error);
+        document.getElementById('root').innerHTML = '<h2>Error loading application. Please check console for details.</h2>';
+      }
+    };
+  </script>
+</body>
+</html>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 100%;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .workout-form, .exercise-history {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input, select {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .set-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sets-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .sets-header, .sets-data {
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .sets-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
