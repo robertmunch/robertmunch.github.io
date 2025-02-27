@@ -6,95 +6,247 @@
   <title>Workout Tracker</title>
   
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
+      max-width: 100%;
+      margin: 0;
+      padding: 10px;
       background-color: #f9f9f9;
     }
-    .workout-form {
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 15px;
     }
-    .exercise-history {
+
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 0;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 10px 0;
+    }
+
+    /* Container styles */
+    .workout-form, .exercise-history {
       background: #fff;
-      padding: 20px;
+      padding: 15px;
       border-radius: 8px;
+      margin-bottom: 15px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 100%;
+      box-sizing: border-box;
     }
+
+    /* Form elements */
     input, select {
-      margin: 5px 0;
-      padding: 8px;
+      margin: 8px 0;
+      padding: 12px;
       width: 100%;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px; /* Better for touch */
     }
+
     button {
       background: #007bff;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
+      padding: 12px 20px;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 16px;
+      margin: 8px 0;
+      touch-action: manipulation;
     }
+
     button:hover {
       background: #0056b3;
     }
+
+    /* Set container and inputs */
     .set-container {
       display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
       align-items: center;
-      background: #fff;
+      background: #f9f9f9;
       padding: 10px;
-      border-radius: 4px;
+      border-radius: 6px;
     }
+
+    .set-container span {
+      min-width: 60px;
+      margin-right: 5px;
+    }
+
+    .set-container input {
+      flex: 1;
+      min-width: 80px;
+      margin: 4px 0;
+    }
+
     .remove-set {
       background: #dc3545;
-      padding: 5px 10px;
-      font-size: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      margin: 4px 0;
+      min-width: 44px;
     }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .action-buttons button {
+      flex: 1;
+    }
+
+    /* Workout history */
     .workout-card {
       border: 1px solid #eee;
-      padding: 15px;
+      padding: 12px;
       margin-bottom: 15px;
       border-radius: 6px;
       background: #f9f9f9;
     }
+
+    .workout-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .workout-card-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: #dc3545;
+      padding: 6px 10px;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    /* Sets grid */
     .sets-grid {
       display: grid;
-      grid-template-columns: 70px 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-top: 10px;
     }
+
     .sets-header {
       font-weight: bold;
       padding: 5px 0;
       border-bottom: 1px solid #ddd;
+      text-align: center;
     }
+
     .sets-data {
       padding: 5px 0;
       border-bottom: 1px solid #eee;
+      text-align: center;
     }
+
     .exercise-date {
       color: #666;
       font-size: 14px;
+      margin: 10px 0;
     }
+
+    /* Error message */
     .error-message {
-      padding: 10px;
+      padding: 15px;
       background-color: #f8d7da;
       color: #721c24;
-      border-radius: 4px;
+      border-radius: 6px;
       margin-bottom: 15px;
     }
+
     .reset-storage {
       background: #dc3545;
-      margin-top: 20px;
+      margin-top: 10px;
+    }
+
+    /* Previous workout info */
+    .previous-workout {
+      background: #e9f7fe;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      border-left: 4px solid #007bff;
+    }
+
+    .previous-workout-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .previous-workout-date {
+      font-size: 0.9em;
+      font-style: italic;
+      color: #666;
+    }
+
+    .previous-set {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dashed #ccc;
+    }
+
+    .previous-set:last-child {
+      border-bottom: none;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .workout-form, .exercise-history {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      .set-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .set-container span {
+        margin-bottom: 4px;
+        font-weight: bold;
+      }
+
+      .remove-set {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -187,6 +339,8 @@
       };
 
       const [workouts, setWorkouts] = React.useState(loadSanitizedWorkouts);
+      const [previousWorkout, setPreviousWorkout] = React.useState(null);
+      const [uniqueExercises, setUniqueExercises] = React.useState([]);
       
       const [currentExercise, setCurrentExercise] = React.useState({
         name: '',
@@ -196,6 +350,25 @@
           reps: ''
         }]
       });
+
+      // Get unique exercise names and save to state
+      React.useEffect(() => {
+        const exerciseNames = [...new Set(workouts.map(w => w.name))].sort();
+        setUniqueExercises(exerciseNames);
+      }, [workouts]);
+      
+      // Find previous workout when exercise name changes
+      React.useEffect(() => {
+        if (currentExercise.name) {
+          const lastWorkout = workouts
+            .filter(w => w.name === currentExercise.name)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          
+          setPreviousWorkout(lastWorkout || null);
+        } else {
+          setPreviousWorkout(null);
+        }
+      }, [currentExercise.name, workouts]);
 
       // Save workouts to localStorage whenever it changes
       React.useEffect(() => {
@@ -235,6 +408,14 @@
             weight: '',
             reps: ''
           }]
+        });
+      };
+
+      const handleExerciseSelect = (e) => {
+        const name = e.target.value;
+        setCurrentExercise({
+          ...currentExercise,
+          name: name
         });
       };
 
@@ -279,6 +460,17 @@
         }
       };
 
+      // Use current exercise from previous workout
+      const useLastWorkout = () => {
+        if (previousWorkout) {
+          // Copy sets but keep current date
+          setCurrentExercise({
+            ...currentExercise,
+            sets: JSON.parse(JSON.stringify(previousWorkout.sets))
+          });
+        }
+      };
+
       // Group workouts by date (most recent first)
       const workoutsByDate = {};
       workouts.forEach(workout => {
@@ -293,6 +485,19 @@
         new Date(b) - new Date(a)
       );
 
+      // Format date for display
+      const formatDate = (dateString) => {
+        try {
+          return new Date(dateString).toLocaleDateString(undefined, { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+        } catch(e) {
+          return dateString;
+        }
+      };
+
       return (
         <div>
           <h1>Workout Tracker</h1>
@@ -301,13 +506,26 @@
             <h2>Add New Exercise</h2>
             <form onSubmit={handleSubmit}>
               <div>
+                <select 
+                  value={currentExercise.name} 
+                  onChange={handleExerciseSelect}
+                >
+                  <option value="">Select or type a new exercise</option>
+                  {uniqueExercises.map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
                 <input
                   type="text"
-                  placeholder="Exercise Name"
+                  placeholder="Or type a new exercise name"
                   value={currentExercise.name}
                   onChange={(e) => setCurrentExercise({...currentExercise, name: e.target.value})}
                 />
               </div>
+              
               <div>
                 <input
                   type="date"
@@ -316,22 +534,40 @@
                 />
               </div>
               
+              {previousWorkout && (
+                <div className="previous-workout">
+                  <div className="previous-workout-title">
+                    <span>Last {previousWorkout.name} Workout</span>
+                    <span className="previous-workout-date">{formatDate(previousWorkout.date)}</span>
+                  </div>
+                  <div>
+                    {previousWorkout.sets.map((set, idx) => (
+                      <div key={idx} className="previous-set">
+                        <span>Set {idx + 1}:</span>
+                        <span>{set.weight} lbs × {set.reps} reps</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" onClick={useLastWorkout} style={{marginTop: '8px', width: '100%'}}>
+                    Use These Sets
+                  </button>
+                </div>
+              )}
+              
               <h3>Sets</h3>
               {currentExercise.sets.map((set, index) => (
                 <div key={index} className="set-container">
-                  <span style={{minWidth: '60px'}}>Set {index + 1}:</span>
+                  <span>Set {index + 1}:</span>
                   <input
                     type="number"
                     placeholder="Weight (lbs)"
                     value={set.weight}
-                    style={{flex: 1}}
                     onChange={(e) => updateSet(index, 'weight', e.target.value)}
                   />
                   <input
                     type="number"
                     placeholder="Reps"
                     value={set.reps}
-                    style={{flex: 1}}
                     onChange={(e) => updateSet(index, 'reps', e.target.value)}
                   />
                   {currentExercise.sets.length > 1 && (
@@ -340,16 +576,18 @@
                       className="remove-set"
                       onClick={() => removeSet(index)}
                     >
-                      ✕
+                      Remove
                     </button>
                   )}
                 </div>
               ))}
               
-              <button type="button" onClick={addSet} style={{marginRight: '10px'}}>
-                Add Set
-              </button>
-              <button type="submit">Save Exercise</button>
+              <div className="action-buttons">
+                <button type="button" onClick={addSet}>
+                  Add Set
+                </button>
+                <button type="submit">Save Exercise</button>
+              </div>
             </form>
           </div>
 
@@ -361,8 +599,7 @@
               <div>
                 <button 
                   onClick={clearAllData} 
-                  className="reset-storage" 
-                  style={{marginBottom: '20px'}}
+                  className="reset-storage"
                 >
                   Clear All Data
                 </button>
@@ -379,11 +616,11 @@
                     </h3>
                     {workoutsByDate[date].map((workout, index) => (
                       <div key={`${date}-${index}`} className="workout-card">
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                          <h3 style={{margin: '0 0 10px 0'}}>{workout.name}</h3>
+                        <div className="workout-card-header">
+                          <h3>{workout.name}</h3>
                           <button 
                             onClick={() => deleteWorkout(workouts.indexOf(workout))}
-                            style={{background: 'transparent', color: '#dc3545', padding: '2px 6px'}}
+                            className="delete-btn"
                           >
                             Delete
                           </button>
@@ -441,61 +678,3 @@
   </script>
 </body>
 </html>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 100%;
-      margin: 0;
-      padding: 20px;
-      background-color: #f9f9f9;
-    }
-    .workout-form, .exercise-history {
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input, select {
-      margin: 5px 0;
-      padding: 8px;
-      width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .set-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .sets-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .sets-header, .sets-data {
-      text-align: center;
-    }
-    @media (max-width: 600px) {
-      .sets-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
